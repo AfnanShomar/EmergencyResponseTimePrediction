@@ -140,6 +140,3 @@ For more information about the Flask application, refer to the `README.md` file 
 - Improve prediction accuracy using additional real-world features.
 - Integrate real-time traffic and weather information.
 - Deploy the application to a cloud platform.
-
-
-This project was developed for educational and research purposes.
