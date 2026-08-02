@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emergency Response Dispatch Predictor — Quick Entry</title>
+<style>
+  :root {
+    --navy: #0f2540;
+    --blue: #1f6feb;
+    --accent: #d64541;
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --text: #1a1f2b;
+    --muted: #5b6472;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 22px 30px;
+    text-align: center;
+  }
+  header h1 { margin: 0; font-size: 20px; }
+  header p { margin: 6px 0 0; color: #b9c6d8; font-size: 13px; }
+  .container {
+    max-width: 560px;
+    margin: 24px auto;
+    padding: 0 16px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 22px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    margin-bottom: 18px;
+  }
+  .card h2 {
+    margin-top: 0;
+    font-size: 15px;
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin: -4px 0 16px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 14px 0 6px;
+  }
+  select, input {
+    width: 100%;
+    padding: 12px;
+    border: 1.5px solid #d7dde5;
+    border-radius: 8px;
+    font-size: 15px;
+    background: white;
+  }
+  select:focus, input:focus {
+    outline: none;
+    border-color: var(--blue);
+  }
+  .toggle-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .toggle-row label {
+    margin: 0;
+  }
+  button {
+    margin-top: 22px;
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+  }
+  button:hover { background: #b83630; }
+  .metric {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--bg);
+  }
+  .metric .label { color: var(--muted); font-size: 13px; }
+  .metric .value { font-weight: 700; font-size: 16px; }
+  .q90 .value { color: var(--accent); }
+  .dispatch-badge {
+    margin-top: 14px;
+    padding: 16px;
+    border-radius: 10px;
+    background: var(--navy);
+    color: white;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 14px;
+    line-height: 1.5;
+  }
+  .empty-state {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .badge-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #2ecc71;
+    margin-right: 4px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🚑 Emergency Response Dispatch — Quick Entry</h1>
+  <p>Only the essentials — everything else is filled in automatically</p>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h2>New Incident</h2>
+    <p class="hint">Designed for use during an active call — 5 fields, under 15 seconds.</p>
+    <form method="POST" action="/predict">
+
+      <label>Distance to Incident (km)</label>
+      <input type="number" step="0.1" min="0" name="Distance_to_Incident"
+             placeholder="e.g. 4.8" value="{{ form_data.Distance_to_Incident if form_data else '' }}" required>
+
+      <label>Incident Severity</label>
+      <select name="Incident_Severity" required>
+        <option value="High">High — life-threatening</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+
+      <label>Region Type</label>
+      <select name="Region_Type" required>
+        <option value="Urban">Urban</option>
+        <option value="Suburban">Suburban</option>
+        <option value="Rural">Rural</option>
+      </select>
+
+      <label>Resource Availability</label>
+      <div class="toggle-row">
+        <div>
+          <label style="font-weight:400; font-size:12px; color:var(--muted); margin-bottom:4px;">Drone</label>
+          <select name="Drone_Availability" required>
+            <option value="Available">Available</option>
+            <option value="Unavailable">Unavailable</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-weight:400; font-size:12px; color:var(--muted); margin-bottom:4px;">Ambulance</label>
+          <select name="Ambulance_Availability" required>
+            <option value="Available">Available</option>
+            <option value="Unavailable">Unavailable</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit">Get Dispatch Recommendation</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Prediction Result</h2>
+    {% if result %}
+      <div class="metric">
+        <span class="label">Q10 — optimistic estimate</span>
+        <span class="value">{{ result.q10 }} min</span>
+      </div>
+      <div class="metric">
+        <span class="label">Q50 — median estimate</span>
+        <span class="value">{{ result.q50 }} min</span>
+      </div>
+      <div class="metric q90">
+        <span class="label">Q90 — worst-case estimate</span>
+        <span class="value">{{ result.q90 }} min</span>
+      </div>
+      <div class="dispatch-badge">{{ result.dispatch }}</div>
+      <p class="note">
+        All other fields (traffic, weather, hospital capacity, battery/fuel level,
+        etc.) were filled in automatically using realistic defaults computed from
+        the training data, and the timestamp was captured as the current time.
+        Recommendation logic: Hybrid → Ambulance → Drone → Delayed / Manual Review,
+        based on Q90, severity, and resource availability.
+      </p>
+    {% else %}
+      <p class="empty-state">
+        Fill in the 5 fields on the left and press
+        “Get Dispatch Recommendation” for the CatBoost Q10 / Q50 / Q90
+        estimates and the recommended dispatch mode.
+      </p>
+    {% endif %}
+  </div>
+
+</div>
+
+</body>
+</html>
